@@ -1,0 +1,234 @@
+ 
+makeAPlot <- function(table,title,legend){
+
+  df <- parentGenreAndData(table)
+  # get principal components
+  
+  drop_cols <- c('Old-Time / Historic','Spoken','Easy Listening','Experimental')
+  df <- df[!(df$parent %in% drop_cols),]
+  
+  pca1 <- prcomp(df[,2:length(df)],scale. = T,center = T)
+  # convert to a dataframe
+  pca1 <- as.data.frame(pca1$x)
+  # add parents
+  pca1$parent <- df$parent
+  # make a plot
+  gg <- ggplot(data = pca1, aes(x = PC1, y = PC2, colour = parent)) + #geom_point() +
+    stat_ellipse() + ggtitle(title)  
+  
+  if(legend == F){
+    gg <- gg + theme(legend.position = "none")
+  }
+  
+  return(gg)
+}
+
+getColumnsLike <- function(table, expr){
+  
+  df <- getData(paste("SELECT * FROM ",table," LIMIT 1",sep = ""))
+  columnsLike <- names(df[,grep(expr,names(df))])
+  
+  columns <- paste("C.",columnsLike[1],sep = "")
+  for(i in 2:length(columnsLike)){
+    columns <- paste(columns,", C.",columnsLike[i],sep="")
+  }
+  # build the desired query
+  topParentToTitle = "(SELECT A.title as parent, B.genre_id FROM (SELECT top_level_parent, title FROM genre_key as G WHERE G.genre_id = G.top_level_parent) AS A JOIN genre_key AS B ON A.top_level_parent = B.top_level_parent)"
+  trackIdToGenre = paste("(SELECT T.track_id, H.* FROM track_key AS T JOIN ",topParentToTitle," AS H ON T.genre_id = H.genre_id)",sep = "")
+  q = paste("SELECT S.parent, ", columns ," FROM ", trackIdToGenre, " AS S JOIN ", table, " AS C ON C.trackID = S.track_id" ,sep = "")
+  df <- getData(q)
+
+  return(df)  
+}
+
+plotColumnsLike <- function(expr,table,title,legend_bool){
+  df <- getColumnsLike(table,expr)
+  
+  drop_cols <- c('Old-Time / Historic','Spoken','Easy Listening','Experimental')
+  df <- df[!(df$parent %in% drop_cols),]
+  
+  # get principal components
+  pca1 <- prcomp(df[,2:length(df)],scale. = T,center = T)
+  # convert to a dataframe
+  pca1 <- as.data.frame(pca1$x)
+  # add parents
+  pca1$parent <- df$parent
+  # make a plot
+  gg <- ggplot(data = pca1, aes(x = PC1, y = PC2, colour = parent)) + #geom_point(alpha = 0.3) +
+    stat_ellipse() + ggtitle(title)
+  
+  if(legend_bool == F){
+    gg <- gg + theme(legend.position = "none")
+  }
+  
+  return(gg)
+}
+
+bulkPlotColumnsLike <- function(table){
+  t <- paste(toupper(substr(table, 1, 1)), substr(table, 2, nchar(table)), sep="")
+  t <- paste(sub("Stat","",table), "Statistic")
+  
+  g1 <- plotColumnsLike("chroma",table,"All Chroma",T)
+  # store the legend as another object
+  legend <- g_legend(g1)
+  # drop the legend
+  g1 <- g1 + theme(legend.position = "none")
+  g2 <- plotColumnsLike("chroma_cens_",table,"Chroma Cens",F)
+  g3 <- plotColumnsLike("chroma_cqt_",table,"Chroma CQT",F)
+  g4 <- plotColumnsLike("chroma_stft_",table,"Chroma STFT",F)
+  g5 <- plotColumnsLike("mfcc",table,"MFCC",F)
+  g6 <- plotColumnsLike("spectral",table,"Spectral Categories",F)
+  g7 <- plotColumnsLike("tonnetz",table,"Tonnetz",F)
+  
+  pdf(paste0("figs/",table,"SplitColumns.pdf"),width = 20,height = 20)
+  grid.arrange(
+    g1,g2,g3,legend,g4,g5,g6,g7,
+    layout_matrix = rbind(c(1,2,4),
+                          c(3,5,4),
+                          c(6,7,8)),
+    top = t
+  )
+  dev.off()
+}
+
+kmeansForTable <- function(table,centroids){
+  df <- parentGenreAndData(table)
+  # drop junk rows
+  drop_rows <- c('Old-Time / Historic','Spoken','Easy Listening','Experimental')
+  df <- df[!(df$parent %in% drop_rows),]
+  
+  # do kmeans
+  output <- kmeans(df[,-1],centers = centroids,iter.max = 20)
+  # make a datframe from cluster output and add actual labels
+  tmp <- as.data.frame(output$cluster) 
+  names(tmp)[1] <- "cluster"
+  tmp$parentGenre <- df[,1]
+  # get confusion matrix from function
+  df <- confusionMatrixFromDF(tmp)
+  #write confusion matrix to csv
+  write.table(df,paste("confMat/kmeans/",centroids,'/',table,".csv",sep = ""),row.names = F,col.names = T)
+}
+
+kmeansForTablePCA <- function(table,centroids,nComp){
+  df <- parentGenreAndData(table)
+  names(df)
+  # drop junk rows
+  drop_rows <- c('Old-Time / Historic','Spoken','Easy Listening','Experimental')
+  df <- df[!(df$parent %in% drop_rows),]
+
+  mu <- colMeans(df[,2:length(df)])
+  Xpca = prcomp(df[,2:length(df)])
+  # reconstruct matrix
+  Xhat = Xpca$x[,1:nComp] %*% t(Xpca$rotation[,1:nComp])
+  Xhat = scale(Xhat, center = -mu, scale = FALSE)
+  # do kmeans
+  output <- kmeans(Xhat[,-1],centers = centroids,iter.max = 20)
+  # make a datframe from cluster output and add actual labels
+  tmp <- as.data.frame(output$cluster) 
+  names(tmp)[1] <- "cluster"
+  tmp$parentGenre <- df[,1]
+  # get confusion matrix from function
+  df <- confusionMatrixFromDF(tmp)
+  #write confusion matrix to csv
+  write.table(df,paste("confMat/kmeans/PCA",nComp,"comp",centroids,'centroids/',table,".csv",sep = ""),row.names = F,col.names = T)
+}
+
+kmeansForGenres <- function(centroids){
+  
+  t <- c("kurtosisStat","meanStat","minStat","maxStat","medianStat","skewStat","stdStat")
+  genres <- c("International","Instrumental","Classical","Rock","Blues","Jazz","Hip-Hop","Folk","Electronic","Pop","Soul-RnB","Country")
+  
+  for(i in 1:length(genres)){
+    for(j in 1:length(t)){
+      df <- singleGenreAndData(t[j],genres[i])
+      output <- kmeans(df[,-1],centers = centroids,iter.max = 20)
+      # make a datframe from cluster output and add actual labels
+      tmp <- as.data.frame(output$cluster) 
+      names(tmp)[1] <- "cluster"
+      tmp$parentGenre <- df[,1]
+      # get confusion matrix from function
+      df <- confusionMatrixFromDF(tmp)
+      #write confusion matrix to csv
+      write.table(df,paste("confMat/kmeans/",centroids,'/',genres[i],'/',t[j],".csv",sep = ""),row.names = F,col.names = T)
+    }# end nested for loop
+  }# end of outer for loop
+
+} # end of kmeansForGenre
+
+g1 <- makeAPlot("meanStat","Mean Statistic",T)
+# store the legend as another object
+legend <- g_legend(g1)
+# drop the legend
+g1 <- g1 + theme(legend.position = "none")
+g2 <- makeAPlot("medianStat","Median Statistic",F)
+g3 <- makeAPlot("maxStat","Max Statistic",F)
+g4 <- makeAPlot("minStat","Min Statistic",F)
+g5 <- makeAPlot("kurtosisStat","Kurtosis Statistic",F)
+g6 <- makeAPlot("skewStat","Skew Statistic",F)
+g7 <- makeAPlot("stdStat","St. Dev. Statistic",F)
+
+# cant save it for some reason
+x11()
+pdf("figs/AllStatsPCA.pdf",width = 20,height = 20)
+arrangeGrob(grid.arrange(
+  g1,g2,g3,legend,g4,g5,g6,
+  ncol = 4,
+  layout_matrix = rbind(c(1,2,3,4),
+                        c(5,6,7,4)),
+  top = "All Statistics"
+  ))
+dev.off()
+#--------------------------------------------------------------
+#                   plot pca 
+#--------------------------------------------------------------
+bulkPlotColumnsLike("kurtosisStat")
+bulkPlotColumnsLike("meanStat")
+bulkPlotColumnsLike("medianStat")
+bulkPlotColumnsLike("minStat")
+bulkPlotColumnsLike("maxStat")
+bulkPlotColumnsLike("stdStat")
+bulkPlotColumnsLike("skewStat")
+#--------------------------------------------------------------
+#                   Do k-means
+#--------------------------------------------------------------
+
+kmeansForAllTables <- function(centroids){
+  kmeansForTable("kurtosisStat",centroids)
+  kmeansForTable("meanStat",centroids)
+  kmeansForTable("medianStat",centroids)
+  kmeansForTable("minStat",centroids)
+  kmeansForTable("maxStat",centroids)
+  kmeansForTable("stdStat",centroids)
+  kmeansForTable("skewStat",centroids)
+}
+
+kmeansForAllTablesPCA <- function(centroids,nComp){
+  kmeansForTablePCA("kurtosisStat",centroids,nComp)
+  kmeansForTablePCA("meanStat",centroids,nComp)
+  kmeansForTablePCA("medianStat",centroids,nComp)
+  kmeansForTablePCA("minStat",centroids,nComp)
+  kmeansForTablePCA("maxStat",centroids,nComp)
+  kmeansForTablePCA("stdStat",centroids,nComp)
+  kmeansForTablePCA("skewStat",centroids,nComp)
+}
+
+kmeansForAllTables(3)
+kmeansForAllTables(4)
+kmeansForAllTables(5)
+kmeansForAllTables(6)
+kmeansForAllTables(7)
+kmeansForAllTables(8)
+kmeansForAllTables(9)
+kmeansForAllTables(10)
+kmeansForAllTables(11)
+kmeansForAllTables(12)
+kmeansForAllTables(13)
+
+for(i in 2:6){
+  for(j in 9:14){
+    tic("Clustering")
+    kmeansForAllTablesPCA(j,i)
+    toc()
+    print(paste0("# of Components: ",i," ,k-means: ",j))
+  }
+}

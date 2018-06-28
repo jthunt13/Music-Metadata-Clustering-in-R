@@ -1,0 +1,6 @@
+max,chroma_cqt_01,chroma_cqt_02,chroma_cqt_03,chroma_cqt_04,chroma_cqt_05,chroma_cqt_06,chroma_cqt_07,chroma_cqt_08,chroma_cqt_09,chroma_cqt_10,chroma_cqt_11,chroma_cqt_12,chroma_stft_01,chroma_stft_02,chroma_stft_03,chroma_stft_04,chroma_stft_05,chroma_stft_06,chroma_stft_07,chroma_stft_08,chroma_stft_09,chroma_stft_10,chroma_stft_11,chroma_stft_12
+mean,zcr_01
+median,zcr_01
+min,chroma_stft_01,chroma_stft_02,chroma_stft_03,chroma_stft_04,chroma_stft_05,chroma_stft_06,chroma_stft_07,chroma_stft_08,chroma_stft_09,chroma_stft_10,chroma_stft_11,chroma_stft_12,mfcc_01,mfcc_02,rmse_01,zcr_01
+skew,chroma_cqt_01,chroma_cqt_02,chroma_stft_07,chroma_stft_08
+std,

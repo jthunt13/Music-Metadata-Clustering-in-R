@@ -1,0 +1,7 @@
+# Columns chosen to drop based on SOM individual attribute heatmapss
+# drop all of kurtosis
+maxStat: all of chroma_cqt, all of chroma_stft
+meanStat: zcr_01
+medianStat: zcr_01
+minStat: all of chroma_stft, mfcc_01 and mfcc_02, rmse_01, zcr_01
+skewStat: chroma_cqt_01, chroma_cqt_02, chroma_stft_07, chroma_stft_08
