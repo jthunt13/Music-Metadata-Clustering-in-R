@@ -1,5 +1,7 @@
 # Music-Metadata-Clustering-in-R
-A project and slideshow focused on using statistical metadata to cluster music tracks into genres.
+A project and slideshow focused on using statistical metadata to cluster music tracks into genres.  A general project work flow is shown below.
+
+<img src="figs/EDA/project_outline.jpg" alt="Project Flow" width="450" height="350">
 
 ## Scope of Data
 The data was acquired from [FMA: A Dataset For Music Analysis](https://github.com/mdeff/fma). Description pulled from the FMA git page:
