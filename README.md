@@ -29,9 +29,20 @@ Each track contains data of measurable musical descriptors:
 
 ## Project Motivation
 As music recommender software becomes more popular, so to does the demand for better recommender algorithms to cluster music that a user may enjoy. This project was motivated by an interest in understanding how music metadata can be used to cluster similar tracks together.
-### Existing Recommender Methods
+#### Existing Recommender Methods
 * Manual Curation
 * Manual Attribute Tagging
 * Collaborative Filtering
 * Natural Language Processing
 * *Raw Audio Modeling(this project)*
+
+## Pre-Processing
+#### How to deal with this size of data?
+* Store data from raw .csv’s as MySQL database tables
+* Only read in attributes from merged tables that are relevant for clustering using sql queries.
+#### How much noise exists within the data?
+* We chose to remove outlying genres such as Old-Time/Historic, Spoken, Easy Listening and Experimental.  This was done either because these tracks would not generally be considered music or were extreme outliers.
+* ~100 columns were dropped from after applying a variance filter to help reduce the amount of noise in the data.
+
+<img src="figs/EDA/dimension_reduction.jpg" alt="Dimension reduction" width="300" height="100">
+
