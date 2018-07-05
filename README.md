@@ -1,5 +1,7 @@
 # Music-Metadata-Clustering-in-R
-A project and slideshow focused on using statistical metadata to cluster music tracks into genres.  A general project work flow is shown below.
+A project and slideshow focused on using statistical metadata to cluster music tracks into genres.  This project was presented amongst a number of other related projects as a semester capstone project.  The format was intended as a slideshow alongside a presentation, and the slideshow has been adapted into this readme file to explain the project in the abscense of the presentation video and audio.  We are working to obtain the footage from the presentation to help clarify any confusion created from this readme.
+
+A general project work flow is shown below.
 
 <img src="figs/EDA/project_outline.jpg" alt="Project Flow" width="450" height="350">
 
