@@ -46,3 +46,36 @@ As music recommender software becomes more popular, so to does the demand for be
 
 <img src="figs/EDA/dimension_reduction.jpg" alt="Dimension reduction" width="300" height="100">
 
+## Dimension Reduction
+Data was split into 2 additional subsets to test the effect of dimension reduction in clustering and classification, leaving  3 distinct, but related data sets:
+* Full Dataset
+* Principal Component Analysis (PCA)
+* Self Organizing Map (SOM)
+#### Self Organizing Map
+<img src="figs/EDA/SOM.jpg" alt="SOM" width="430" height="330"> <img src="figs/EDA/SOM2.jpg" alt="SOM2" width="430" height="330">
+
+#### Principal Component Analysis
+<img src="figs/EDA/PCA.jpg" alt="PCA" width="430" height="330">
+
+## Analysis
+#### K-Means Clustering
+<img src="figs/EDA/kmeans.jpg" alt="K-Means" width="430" height="330">
+
+#### Deep Neural Network
+<img src="figs/EDA/DNN.jpg" alt="DNN" width="430" height="330"> <img src="figs/EDA/DNN2.jpg" alt="DNN2" width="430" height="330">
+
+#### Linear Discriminant Analysis(LDA)
+<img src="figs/EDA/LDA.jpg" alt="LDA" width="430" height="330"> <img src="figs/EDA/LDA2.jpg" alt="LDA2" width="430" height="330">
+
+
+## Conclusion
+#### What we learned
+* Raw audio does not separate easily into clusters (genres).
+* Dimension reduction using PCA helped when clustering.
+* Subjective genre labeling may not accurately represent similarities in the tracks raw audio.
+
+#### Moving Forward
+* Feature engineering by combining metrics may present better results.
+* Test our clusters by forming playlists from the clusters and compare those to creating playlists from the actual genre labels.
+
+<img src="figs/EDA/trackview.jpg" alt="trackview" width="400" height="100">
